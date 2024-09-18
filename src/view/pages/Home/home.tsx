@@ -5,6 +5,7 @@ import {
 } from "@/hooks/company";
 import { Button } from "@/ui/button";
 import { Icon } from "@/ui/icon";
+import { Spinner } from "@/ui/spinner";
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 
@@ -133,9 +134,9 @@ export function Home() {
     (comp) => comp.name.toLowerCase() === company,
   );
 
-  const { locations } = useGetLocationsByCompany(selectedCompany?.id);
+  const { locations, isLoadingLocations } = useGetLocationsByCompany(selectedCompany?.id);
 
-  const { assets } = useGetAssetsByCompany(selectedCompany?.id);
+  const { assets, isLoadingAssets } = useGetAssetsByCompany(selectedCompany?.id);
 
   const tree3 = useMemo(() => {
     const root: ItemTree[] = [];
@@ -154,13 +155,14 @@ export function Home() {
       }
 
       itemsById[location.id] = newItem;
+
     });
 
     locations.forEach((location) => {
       if (location.parentId && itemsById[location.parentId]) {
         itemsById[location.parentId].children!.push(itemsById[location.id]);
       }
-    });
+    })
 
     assets.forEach((asset) => {
       const newItem: ItemTree = {
@@ -202,6 +204,8 @@ export function Home() {
   // Se esse item tiver parentId e não tem um sensorId, significa que esse asset tem um asset como parent
   // se ele tiver um sensor type, é um componente. Se tiver um location ou parentId, ele tem um location ou parent
 
+  const loadingTree = useMemo(() => Boolean((isLoadingAssets || isLoadingLocations)), [isLoadingAssets, isLoadingLocations]);
+
   return (
     <div className="flex flex-col items-center justify-center gap-4 w-full ">
       <div className="flex justify-between items-center w-full">
@@ -229,7 +233,7 @@ export function Home() {
         )}
       </div>
 
-      {selectedCompany ? (
+      {selectedCompany ? loadingTree ? (<div><Spinner /></div>) : (
         <div className="flex flex-row w-full gap-2 h-full">
           <div className=" w-1/2 border border-border rounded-md">
             <Tree data={tree3} />
