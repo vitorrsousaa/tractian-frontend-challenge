@@ -18,7 +18,8 @@ export type Asset = {
 	name: string;
 	sensorType: string | null;
 	status: string | null;
-  sensorId: string | null;
+	sensorId: string | null;
+	gatewayId: string | null;
 };
 
 async function getAllCompanies() {
