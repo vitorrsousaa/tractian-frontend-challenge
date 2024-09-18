@@ -6,7 +6,7 @@ import {
 import { Button } from "@/ui/button";
 import { Icon } from "@/ui/icon";
 import { Spinner } from "@/ui/spinner";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { cn } from "@/utils/cn";
 import { Card } from "./components/card";
@@ -14,81 +14,7 @@ import { CardHeader } from "./components/card-header";
 import { CardContent } from "./components/card-content";
 import { CardInfo } from "./components/card-info";
 import { CardReceptor, CardSensor } from "./components/card-sensors";
-
-type ItemTree = {
-	id: string;
-	name: string;
-	children?: ItemTree[];
-	status?: string | null;
-	sensorType: string | null;
-	locationId?: string | null;
-	sensorId?: string | null;
-	parentId?: string | null;
-	gatewayId?: string | null;
-};
-
-function TreeNode({ node, fnSelected }: { node: ItemTree; fnSelected: any }) {
-	const isComponent = Boolean(node.sensorType);
-	const isAsset = Boolean((node.locationId || node.parentId) && !node.sensorId);
-	const sensorIsEnergy = node.sensorType === "energy";
-
-	return (
-		<li>
-			<div
-				className="flex items-center gap-1 cursor-pointer hover:bg-blue-300"
-				onClick={() => {
-					isComponent && fnSelected(node);
-					isAsset && console.log("oie, é asset");
-					!isAsset && !isComponent && console.log("é location");
-				}}
-			>
-				<Icon
-					name={isComponent ? "component" : isAsset ? "asset" : "location"}
-				/>
-				<span>{node.name}</span>
-				{isComponent && (
-					<div>
-						{sensorIsEnergy ? (
-							<Icon
-								name="thunderbolt"
-								className={cn(
-									node.status === "operating" && "fill-green-500",
-									node.status === "alert" && "fill-red-500",
-								)}
-							/>
-						) : (
-							<div
-								className={cn(
-									"w-2 h-2 rounded-full",
-									node.status === "operating" && "bg-green-500",
-									node.status === "alert" && "bg-red-500",
-								)}
-							/>
-						)}
-					</div>
-				)}
-			</div>
-
-			{node.children && (
-				<ul className="pl-6 space-y-2">
-					{node.children.map((child) => (
-						<TreeNode key={child.id} node={child} fnSelected={fnSelected} />
-					))}
-				</ul>
-			)}
-		</li>
-	);
-}
-
-function Tree({ data, fnSelected }: { data: ItemTree[]; fnSelected: any }) {
-	return (
-		<ul className="space-y-2 pl-2">
-			{data.map((item: any) => (
-				<TreeNode key={item.id} node={item} fnSelected={fnSelected} />
-			))}
-		</ul>
-	);
-}
+import { ItemTree, Tree } from "./components/tree";
 
 export function Home() {
 	const { company } = useParams<{ company: string }>();
@@ -178,8 +104,6 @@ export function Home() {
 			}
 		});
 
-		console.log(root);
-
 		return root;
 	}, [locations, assets]);
 
@@ -198,19 +122,19 @@ export function Home() {
 		null,
 	);
 
-	function handleFilterBySensor() {
+	const handleFilterBySensor = useCallback(() => {
 		setFilter((prevState) => ({
 			status: "all",
-			sensor: filter.sensor === "all" ? "energy" : "all",
+			sensor: prevState.sensor === "all" ? "energy" : "all",
 		}));
-	}
+	}, []);
 
-	function handleFilterByStatus() {
+	const handleFilterByStatus = useCallback(() => {
 		setFilter((prevState) => ({
 			sensor: "all",
-			status: filter.status === "all" ? "alert" : "all",
+			status: prevState.status === "all" ? "alert" : "all",
 		}));
-	}
+	}, []);
 
 	return (
 		<div className="flex flex-col items-center justify-center gap-4 w-full ">
@@ -262,7 +186,7 @@ export function Home() {
 				) : (
 					<div className="flex flex-row w-full gap-2 h-full">
 						<div className=" w-1/2 border border-border rounded-md">
-							<Tree data={tree3} fnSelected={setSelectedComponent} />
+							<Tree data={tree3} selectedNodeCallback={setSelectedComponent} />
 						</div>
 						<div className="flex flex-col gap-2 w-full border border-border rounded-md">
 							{selectedComponent ? (
@@ -282,7 +206,9 @@ export function Home() {
 									</CardContent>
 								</Card>
 							) : (
-								<>nao tem </>
+								<div className="flex mt-8 items-center justify-center">
+									Selecione um ativo no painel ao lado
+								</div>
 							)}
 						</div>
 					</div>
