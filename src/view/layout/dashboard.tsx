@@ -1,4 +1,4 @@
-import { Outlet } from "react-router-dom";
+import { Link, Outlet, useParams } from "react-router-dom";
 import logo from "@/assets/LOGO_TRACTIAN.svg";
 import { Icon } from "@/ui/icon";
 import { Button } from "@/ui/button";
@@ -8,6 +8,8 @@ import { Spinner } from "@/ui/spinner";
 export function Dashboard() {
 	const { companies, isErrorCompanies, isLoadingCompanies } =
 		useGetAllCompanies();
+
+	const { company: companyParam } = useParams();
 
 	return (
 		<div className="flex flex-col items-center justify-center">
@@ -20,10 +22,14 @@ export function Dashboard() {
 						<button className="text-white">X</button>
 					) : (
 						companies.map((company) => (
-							<Button key={company.id}>
-								<Icon name="gold" />
-								<span>{company.name} Unit</span>
-							</Button>
+							<Link key={company.id} to={`/${company.name.toLowerCase()}`}>
+								<Button
+									isSelected={companyParam === company.name.toLowerCase()}
+								>
+									<Icon name="gold" />
+									<span>{company.name} Unit</span>
+								</Button>
+							</Link>
 						))
 					)}
 				</div>

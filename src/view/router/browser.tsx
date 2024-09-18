@@ -10,6 +10,7 @@ export function Browser() {
 				<Route path="*" element={<>Page Not found</>} />
 				<Route element={<Dashboard />}>
 					<Route path={ROUTES.HOME} element={<Home />} />
+					<Route path={ROUTES.ASSETS} element={<Home />} />
 				</Route>
 			</Routes>
 		</BrowserRouter>
