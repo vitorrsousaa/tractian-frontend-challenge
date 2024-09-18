@@ -20,6 +20,7 @@ export default defineConfig({
 			"@/services": path.resolve(__dirname, "./src/app/services"),
 			"@/utils": path.resolve(__dirname, "./src/app/utils"),
 			"@/storage": path.resolve(__dirname, "./src/app/storage"),
+			"@/assets": path.resolve(__dirname, "./src/view/assets"),
 		},
 	},
 });

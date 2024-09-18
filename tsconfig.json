@@ -1,44 +1,74 @@
 {
-	"compilerOptions": {
-		"target": "ES2020",
-		"useDefineForClassFields": true,
-		"lib": ["ES2020", "DOM", "DOM.Iterable"],
-		"module": "ESNext",
-		"skipLibCheck": true,
-
-		/* Bundler mode */
-		"moduleResolution": "bundler",
-		"allowImportingTsExtensions": true,
-		"resolveJsonModule": true,
-		"isolatedModules": true,
-		"noEmit": true,
-		"jsx": "react-jsx",
-
-		/* Linting */
-		"strict": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noFallthroughCasesInSwitch": true,
-
-		/* Aliases */
-		"baseUrl": ".",
-		"paths": {
-			"@/config/*": ["./src/app/config/*"],
-			"@/pages/*": ["./src/view/pages/*"],
-			"@/components/*": ["./src/view/components/*"],
-			"@/ui/*": ["./src/view/ui/*"],
-			"@/contexts/*": ["./src/app/contexts/*"],
-			"@/hooks/*": ["./src/app/hooks/*"],
-			"@/libs/*": ["./src/app/libs/*"],
-			"@/services/*": ["./src/app/services/*"],
-			"@/utils/*": ["./src/app/utils/*"],
-			"@/storage/*": ["./src/app/storage/*"]
-		},
-
-		/* Testing */
-		"types": ["vitest/globals"]
-	},
-
-	"include": ["src"],
-	"references": [{ "path": "./tsconfig.node.json" }]
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    /* Aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@/config/*": [
+        "./src/app/config/*"
+      ],
+      "@/pages/*": [
+        "./src/view/pages/*"
+      ],
+      "@/components/*": [
+        "./src/view/components/*"
+      ],
+      "@/ui/*": [
+        "./src/view/ui/*"
+      ],
+      "@/contexts/*": [
+        "./src/app/contexts/*"
+      ],
+      "@/hooks/*": [
+        "./src/app/hooks/*"
+      ],
+      "@/libs/*": [
+        "./src/app/libs/*"
+      ],
+      "@/services/*": [
+        "./src/app/services/*"
+      ],
+      "@/utils/*": [
+        "./src/app/utils/*"
+      ],
+      "@/storage/*": [
+        "./src/app/storage/*"
+      ],
+      "@/assets/*": [
+        "./src/assets/*"
+      ]
+    },
+    /* Testing */
+    "types": [
+      "vitest/globals"
+    ]
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ]
 }
