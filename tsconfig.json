@@ -54,6 +54,9 @@
       "@/storage/*": [
         "./src/app/storage/*"
       ],
+      "@/store/*": [
+        "./src/app/store/*"
+      ],
       "@/assets/*": [
         "./src/assets/*"
       ]

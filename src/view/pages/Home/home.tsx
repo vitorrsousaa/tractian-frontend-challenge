@@ -3,6 +3,8 @@ import {
   useGetAssetsByCompany,
   useGetLocationsByCompany,
 } from "@/hooks/company";
+import { Asset, Location } from "@/services/companies";
+import useComponent from "@/store/component";
 import { Button } from "@/ui/button";
 import { Icon } from "@/ui/icon";
 import { Spinner } from "@/ui/spinner";
@@ -14,7 +16,14 @@ import { CardContent } from "./components/card-content";
 import { CardHeader } from "./components/card-header";
 import { CardInfo } from "./components/card-info";
 import { CardReceptor, CardSensor } from "./components/card-sensors";
+import { Search } from "./components/search";
 import { ItemTree, Tree } from "./components/tree";
+
+
+
+export interface TreeNodeMap {
+  [id: string]: ItemTree;
+}
 
 export function Home() {
   const { company } = useParams<{ company: string }>();
@@ -45,200 +54,51 @@ export function Home() {
     },
   });
 
-  const tree7 = useMemo(() => {
-    const childs = new Map();
-    const parents = new Map();
-
-    locations.forEach((location) => {
-      const newItem = {
-        id: location.id,
-        name: location.name,
-        parentId: location.parentId,
-        children: [],
-      };
-
-      // elemento é um pai de outro elemento
-      const isParent = !location.parentId;
-      const elementAlreadyAdded = childs.has(location.id);
-      // se ele é um parent, eu adiciono ele no root
-      if (isParent) {
-        // esse elemento qe é um api já foi adicionado?
-        if (elementAlreadyAdded) {
-          // pode ser que ele tenha sido adicionado usando o fakeElement
-          // se ele já foi adicionado, eu preciso atualizar os dados dele
-          const element = childs.get(location.id);
-          element.name = location.name;
-          return;
-        } else {
-          childs.set(location.id, newItem);
-          return;
-        }
-      }
-
-      // se ele não é um parent, eu preciso adicionar ele dentro de outro elemento
-
-      // o pai dele, já foi adicionado?
-      const parentAlreadyAdded = childs.has(location.parentId);
-
-      // se o pai já foi adicionado, eu adiciono ele dentro do pai
-      if (parentAlreadyAdded) {
-        const parent = childs.get(location.parentId);
-        parent.children.push(newItem);
-        return;
-      }
-
-      // se o pai não foi adicionado, eu crio um fake para o pai, e adiciono o filho dentro do fake
-      const fakeElement = {
-        id: location.parentId,
-        name: "",
-        children: [newItem],
-      };
-
-      childs.set(location.parentId, fakeElement);
-
-      const paramChild = {
-        id: location.id,
-        parentId: location.parentId,
-        name: location.name,
-        children: [],
-      };
-
-      parents.set(location.id, paramChild);
-    });
-
-    assets.forEach((asset) => {
-      const newItem = {
-        id: asset.id,
-        name: asset.name,
-        sensorType: asset.sensorType,
-        status: asset.status,
-        children: [],
-        sensorId: asset.sensorId,
-        locationId: asset.locationId,
-        parentId: asset.parentId || asset.locationId,
-        gatewayId: asset.gatewayId,
-      };
-
-      // esse asset, vai ser adicionado na raiz?
-      const shouldAddedOnRoot = !asset.locationId && !asset.parentId;
-      if (shouldAddedOnRoot) {
-        childs.set(asset.id, newItem);
-        return;
-      }
-
-      // esse elemento já foi adicionado no map de parents?
-      const elementAlreadyAdded = parents.has(asset.id);
-      if (elementAlreadyAdded) {
-        const element = parents.get(asset.id);
-        element.name = asset.name;
-        element.sensorType = asset.sensorType;
-        element.status = asset.status;
-        element.sensorId = asset.sensorId;
-        element.parentId = asset.parentId || asset.locationId;
-        element.gatewayId = asset.gatewayId;
-      } else {
-        parents.set(asset.id, newItem);
-      }
-
-      // ele tem locationId?
-      const assetIsChildOfLocation = asset.locationId;
-
-      const childrensAlreadyAdded = elementAlreadyAdded
-        ? parents.get(asset.id).children
-        : [];
-
-      const newItemWithAlreadyAddedChildren = {
-        id: asset.id,
-        name: asset.name,
-        sensorType: asset.sensorType,
-        status: asset.status,
-        children: childrensAlreadyAdded,
-        sensorId: asset.sensorId,
-        locationId: asset.locationId,
-        parentId: asset.parentId || asset.locationId,
-        gatewayId: asset.gatewayId,
-      };
-
-      if (assetIsChildOfLocation) {
-        // essa location esta na raiz?
-        const thisLocationIsOnRoot = childs.has(asset.locationId);
-        if (thisLocationIsOnRoot) {
-          const location = childs.get(asset.locationId);
-          location.children.push(newItemWithAlreadyAddedChildren);
-          // adicionar o elemento no map de parents
-          parents.set(asset.id, newItemWithAlreadyAddedChildren);
-          return;
-        }
-        // se não ta na raiz, ele é children de algum outro elemento
-        const thisAssetIsGrandChild = parents.has(asset.locationId);
-        if (thisAssetIsGrandChild) {
-          const findedParent = parents.get(asset.locationId);
-          const findedGrandParent = childs.get(findedParent.parentId);
-          findedParent.children = [newItemWithAlreadyAddedChildren];
-          findedGrandParent.children = [findedParent];
-
-          // se ele é um filho de um grandParent, eu preciso adicionar ele no map de parents
-          parents.set(asset.id, newItemWithAlreadyAddedChildren);
-          return;
-        }
-
-        return;
-      }
-
-      // se chegou aqui, é porque tem um parentId
-      const thisParentIsOnRoot = childs.has(asset.parentId);
-      if (thisParentIsOnRoot) {
-        const parent = childs.get(asset.parentId);
-        parent.children.push(newItemWithAlreadyAddedChildren);
-        // adicionar o elemento no map de parents
-
-        parents.set(asset.id, newItemWithAlreadyAddedChildren);
-        return;
-      }
-
-      // se nao ta na raiz, ele é children de outro elemento
-      const thisAssetIsGrandChild = parents.has(asset.parentId);
-
-      if (thisAssetIsGrandChild) {
-        const findedParent = parents.get(asset.parentId);
-
-        const thisParentWasUpdated = findedParent.parentId.length > 0;
-
-        if (thisParentWasUpdated) {
-          const findedGrandParent = parents.get(findedParent.parentId);
-          const findedGreatGradson = childs.get(findedGrandParent.parentId);
-          findedParent.children = [newItemWithAlreadyAddedChildren];
-          findedGrandParent.children = [findedParent];
-          findedGreatGradson.children = [findedGrandParent];
-
-          return;
-        }
-
-        findedParent.children.push(newItemWithAlreadyAddedChildren);
-        return;
-      }
-
-      const fakeElement = {
-        id: asset.parentId,
-        parentId: "",
-        name: "",
-        children: [newItemWithAlreadyAddedChildren],
-      };
-
-      parents.set(asset.parentId, fakeElement);
-
-      return;
-    });
-    return Array.from(childs.values());
-  }, [locations, assets]);
-
   const loadingTree = useMemo(
     () => Boolean(isLoadingAssets || isLoadingLocations),
     [isLoadingAssets, isLoadingLocations],
   );
 
-  const [selectedComponent, setSelectedComponent] = useState<ItemTree | null>(
-    null,
+  const buildTree = (locations: Location[], assets: Asset[]) => {
+    const locationMap: TreeNodeMap = {};
+    const assetMap: TreeNodeMap = {};
+
+    locations.forEach(
+      (location) => (locationMap[location.id] = { ...location, children: [] }),
+    );
+    assets.forEach(
+      (asset) =>
+        (assetMap[asset.id] = { ...asset, children: [] }),
+    );
+
+    locations.forEach((location) => {
+      if (location.parentId)
+        locationMap[location.parentId]?.children.push(locationMap[location.id]);
+    });
+
+    assets.forEach((asset) => {
+      if (asset.parentId) {
+        if (assetMap[asset.parentId])
+          assetMap[asset.parentId]?.children.push(assetMap[asset.id]);
+      } else if (asset.locationId) {
+        locationMap[asset.locationId]?.children.push(assetMap[asset.id]);
+      }
+    });
+
+    const rootLocations = Object.values(locationMap).filter(
+      (location) => !location.parentId,
+    );
+
+    const rootAssets = Object.values(assetMap).filter(
+      (asset) => !asset.parentId && !asset.locationId,
+    );
+
+    return [...rootLocations, ...rootAssets];
+  };
+
+  const tree8 = useMemo(
+    () => buildTree(locations, assets),
+    [locations, assets],
   );
 
   const handleFilterBySensor = useCallback(() => {
@@ -255,8 +115,10 @@ export function Home() {
     }));
   }, []);
 
+  const { component } = useComponent();
+
   return (
-    <div className="flex flex-col items-center justify-center gap-4 w-full ">
+    <div className="flex flex-col items-center justify-center gap-4 w-full h-full">
       <div className="flex justify-between items-center w-full">
         <div>
           <strong>Ativos</strong>{" "}
@@ -304,23 +166,24 @@ export function Home() {
           </div>
         ) : (
           <div className="flex flex-row w-full gap-2 h-full">
-            <div className="w-1/2 border border-border rounded-md overflow-y-auto max-h-screen">
-              <Tree data={tree7} selectedNodeCallback={setSelectedComponent} />
+            <div className="w-[550px] border border-border rounded-md overflow-y-auto max-h-screen min-h-[calc(100vh-64px)]">
+              <Search />
+              <Tree data={tree8} />
             </div>
             <div className="flex flex-col gap-2 w-full border border-border rounded-md">
-              {selectedComponent ? (
+              {component ? (
                 <Card>
-                  <CardHeader>{selectedComponent.name}</CardHeader>
+                  <CardHeader>{component.name}</CardHeader>
                   <hr />
                   <CardContent>
                     <CardInfo
-                      name={selectedComponent.name}
-                      sensorType={selectedComponent.sensorType}
+                      name={component.name}
+                      sensorType={component.sensorType}
                     />
                     <hr />
                     <div className="flex flex-row w-full justify-between">
-                      <CardSensor>{selectedComponent.sensorId}</CardSensor>
-                      <CardReceptor>{selectedComponent.gatewayId}</CardReceptor>
+                      <CardSensor>{component.sensorId}</CardSensor>
+                      <CardReceptor>{component.gatewayId}</CardReceptor>
                     </div>
                   </CardContent>
                 </Card>

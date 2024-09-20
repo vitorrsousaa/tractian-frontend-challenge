@@ -1,65 +1,85 @@
+import useComponent from "@/store/component";
 import { Icon } from "@/ui/icon";
-import { ItemTree } from "./tree";
 import { cn } from "@/utils/cn";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { ItemTree } from "./tree";
 
 export function TreeNode({
-	node,
-	selectedNodeCallback,
-}: { node: ItemTree; selectedNodeCallback: (node: ItemTree) => void }) {
-	const isComponent = Boolean(node.sensorType);
-	const isAsset = Boolean((node.locationId || node.parentId) && !node.sensorId);
-	const sensorIsEnergy = node.sensorType === "energy";
+  node,
+}: { node: ItemTree }) {
+  const isComponent = Boolean(node.sensorType);
+  const isAsset = Boolean((node.locationId || node.parentId) && !node.sensorId);
+  const sensorIsEnergy = node.sensorType === "energy";
 
-	const iconName = useMemo(
-		() => (isComponent ? "component" : isAsset ? "asset" : "location"),
-		[isComponent, isAsset],
-	);
+  const iconName = useMemo(
+    () => (isComponent ? "crumpled_paper" : isAsset ? "cube" : "location"),
+    [isComponent, isAsset],
+  );
 
-	return (
-		<li>
-			<div
-				className="flex items-center gap-1 cursor-pointer hover:bg-blue-200"
-				onClick={() => {
-					isComponent && selectedNodeCallback(node);
-				}}
-			>
-				<Icon name={iconName} />
-				<span>{node.name}</span>
-				{isComponent && (
-					<div>
-						{sensorIsEnergy ? (
-							<Icon
-								name="thunderbolt"
-								className={cn(
-									node.status === "operating" && "fill-green-500",
-									node.status === "alert" && "fill-red-500",
-								)}
-							/>
-						) : (
-							<div
-								className={cn(
-									"w-2 h-2 rounded-full",
-									node.status === "operating" && "bg-green-500",
-									node.status === "alert" && "bg-red-500",
-								)}
-							/>
-						)}
-					</div>
-				)}
-			</div>
+  const { select: selectComponent } = useComponent();
 
-			{node.children && (
-				<ul className="pl-6 space-y-2">
-					{node.children.map((child) => (
-						<TreeNode
-							key={child.id}
-							node={child}
-							selectedNodeCallback={selectedNodeCallback}
-						/>
-					))}
-				</ul>
-			)}
-		</li>
-	);
+  const [showChildrens, setShowChildrens] = useState(false);
+
+  const hasChildrens = Boolean(node.children && node.children.length > 0);
+
+  const handleClick = () => {
+    if (hasChildrens) setShowChildrens(!showChildrens);
+    else if (node.sensorType) {
+      selectComponent(node as any);
+    }
+  };
+
+  return (
+    <>
+      <button
+        className="flex items-center gap-1 cursor-pointer hover:bg-blue-200"
+        onClick={handleClick}
+      >
+        {hasChildrens && (
+          <>
+            {showChildrens ? (
+              <Icon name="chevron_down" className="w-5 h-5 " />
+            ) : (
+              <Icon name="chevron_right" className="w-5 h-5 " />
+            )}
+          </>
+        )}
+        <Icon name={iconName} className="text-blue-500 w-5 h-5" />
+        <span className="truncate">{node.name}</span>
+        {isComponent && (
+          <div>
+            {sensorIsEnergy ? (
+              <Icon
+                name="thunderbolt"
+                className={cn(
+                  node.status === "operating" && "fill-green-500",
+                  node.status === "alert" && "fill-red-500",
+                )}
+              />
+            ) : (
+              <Icon
+                name="dot_filled"
+                className={cn(
+                  "w-5 h-5 ",
+                  node.status === "operating" && "text-green-500",
+                  node.status === "alert" && "text-red-500",
+                )}
+              />
+            )}
+          </div>
+        )}
+      </button>
+
+      {node.children && showChildrens && (
+        <ul className="pl-6 space-y-2">
+          {node.children.map((child) => (
+            <TreeNode
+              key={child.id}
+              node={child}
+            />
+          ))}
+        </ul>
+      )}
+    </>
+  );
 }
