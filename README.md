@@ -7,6 +7,7 @@ This project was created for the Front End Software Engineer Challenge.
 Check the deployed app: (Application)[https://tractian-frontend-challenge-mu.vercel.app/]
 
 Check this video with all funcionalities:
+![Print](tractian-frontend-challenge.gif)
 
 
 ## Technologies
