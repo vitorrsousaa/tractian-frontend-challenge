@@ -1,12 +1,10 @@
 import useComponent from "@/store/component";
 import { Icon } from "@/ui/icon";
 import { cn } from "@/utils/cn";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ItemTree } from "./tree";
 
-export function TreeNode({
-  node,
-}: { node: ItemTree }) {
+export function TreeNode({ node }: { node: ItemTree }) {
   const isComponent = Boolean(node.sensorType);
   const isAsset = Boolean((node.locationId || node.parentId) && !node.sensorId);
   const sensorIsEnergy = node.sensorType === "energy";
@@ -18,7 +16,8 @@ export function TreeNode({
 
   const { select: selectComponent } = useComponent();
 
-  const [showChildrens, setShowChildrens] = useState(false);
+  const [showChildrens, setShowChildrens] = useState(node.isExpanded || false);
+
 
   const hasChildrens = Boolean(node.children && node.children.length > 0);
 
@@ -29,8 +28,15 @@ export function TreeNode({
     }
   };
 
+  useEffect(() => {
+
+    setShowChildrens(node.isExpanded || false)
+  }, [node.isExpanded])
+
+  const filter = node.isBeingFiltered === false && node.isExpanded === false;
+
   return (
-    <>
+    <div className={cn(filter && "hidden")}>
       <button
         className="flex items-center gap-1 cursor-pointer hover:bg-blue-200"
         onClick={handleClick}
@@ -73,13 +79,10 @@ export function TreeNode({
       {node.children && showChildrens && (
         <ul className="pl-6 space-y-2">
           {node.children.map((child) => (
-            <TreeNode
-              key={child.id}
-              node={child}
-            />
+            <TreeNode key={child.id} node={child} />
           ))}
         </ul>
       )}
-    </>
+    </div>
   );
 }

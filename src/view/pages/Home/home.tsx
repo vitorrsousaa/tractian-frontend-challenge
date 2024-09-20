@@ -9,7 +9,7 @@ import { Button } from "@/ui/button";
 import { Icon } from "@/ui/icon";
 import { Spinner } from "@/ui/spinner";
 import { cn } from "@/utils/cn";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useReducer } from "react";
 import { useParams } from "react-router-dom";
 import { Card } from "./components/card";
 import { CardContent } from "./components/card-content";
@@ -18,8 +18,6 @@ import { CardInfo } from "./components/card-info";
 import { CardReceptor, CardSensor } from "./components/card-sensors";
 import { Search } from "./components/search";
 import { ItemTree, Tree } from "./components/tree";
-
-
 
 export interface TreeNodeMap {
   [id: string]: ItemTree;
@@ -30,13 +28,16 @@ export function Home() {
 
   const { companies } = useGetAllCompanies();
 
-  const [filter, setFilter] = useState<{
-    sensor: "energy" | "all";
-    status: "alert" | "all";
-  }>({
-    sensor: "all",
-    status: "all",
-  });
+  const [sensorfilter, toggleSensorFilter] = useReducer((prev) => !prev, false);
+  const [statusfilter, toggleStatusFilter] = useReducer((prev) => !prev, false);
+
+  // const [filter, setFilter] = useState<{
+  //   sensor: "energy" | "all";
+  //   status: "alert" | "all";
+  // }>({
+  //   sensor: "all",
+  //   status: "all",
+  // });
 
   const selectedCompany = companies.find(
     (comp) => comp.name.toLowerCase() === company,
@@ -48,10 +49,10 @@ export function Home() {
 
   const { assets, isLoadingAssets } = useGetAssetsByCompany({
     companyId: selectedCompany?.id,
-    filters: {
-      sensor: filter.sensor,
-      status: filter.status,
-    },
+    // filters: {
+    //   sensor: filter.sensor,
+    //   status: filter.status,
+    // },
   });
 
   const loadingTree = useMemo(
@@ -67,8 +68,7 @@ export function Home() {
       (location) => (locationMap[location.id] = { ...location, children: [] }),
     );
     assets.forEach(
-      (asset) =>
-        (assetMap[asset.id] = { ...asset, children: [] }),
+      (asset) => (assetMap[asset.id] = { ...asset, children: [] }),
     );
 
     locations.forEach((location) => {
@@ -101,18 +101,54 @@ export function Home() {
     [locations, assets],
   );
 
+  function filterTree(
+    tree: ItemTree[],
+    filter: { sensor: boolean; status: boolean },
+  ) {
+    return tree.map((item) => {
+      const sensorFilterIsActivated =
+        filter.sensor && item.sensorType === "energy";
+      const statusFilterIsActivated = filter.status && item.status === "alert";
+
+      const isBeingFiltered = sensorFilterIsActivated || statusFilterIsActivated;
+
+      item.isBeingFiltered = isBeingFiltered;
+      item.isExpanded = isBeingFiltered;
+
+      if (Object.values(filter).every((value) => value === false)) {
+        delete item.isBeingFiltered;
+      }
+
+      if (item.children) {
+        filterTree(item.children, filter);
+
+        const hasChildrenBeingFiltered = item.children.some(
+          (child) => child.isExpanded,
+        );
+
+        if (hasChildrenBeingFiltered) {
+          item.isExpanded = true;
+        }
+      }
+
+      return item;
+    });
+  }
+
+  const filteredTree = useMemo(() => {
+    return filterTree(tree8, { sensor: sensorfilter, status: statusfilter });
+  }, [tree8, sensorfilter, statusfilter, filterTree]);
+
+  console.log(filteredTree);
+
   const handleFilterBySensor = useCallback(() => {
-    setFilter((prevState) => ({
-      status: "all",
-      sensor: prevState.sensor === "all" ? "energy" : "all",
-    }));
+    toggleSensorFilter();
+
   }, []);
 
   const handleFilterByStatus = useCallback(() => {
-    setFilter((prevState) => ({
-      sensor: "all",
-      status: prevState.status === "all" ? "alert" : "all",
-    }));
+    toggleStatusFilter();
+
   }, []);
 
   const { component } = useComponent();
@@ -132,26 +168,22 @@ export function Home() {
         {selectedCompany && (
           <div className="flex gap-2">
             <Button
-              variant={filter.sensor === "all" ? "secondary" : "tertiary"}
+              variant={!sensorfilter ? "secondary" : "tertiary"}
               onClick={handleFilterBySensor}
             >
               <Icon
                 name="thunderbolt"
-                className={cn(
-                  filter.sensor === "all" ? "fill-primary" : "fill-white",
-                )}
+                className={cn(!sensorfilter ? "fill-primary" : "fill-white")}
               />
               Sensor de energia
             </Button>
             <Button
               onClick={handleFilterByStatus}
-              variant={filter.status === "all" ? "secondary" : "tertiary"}
+              variant={!statusfilter ? "secondary" : "tertiary"}
             >
               <Icon
                 name="exclamationCircle"
-                className={cn(
-                  filter.status === "all" ? "fill-primary" : "fill-white",
-                )}
+                className={cn(!statusfilter ? "fill-primary" : "fill-white")}
               />
               Crítico
             </Button>

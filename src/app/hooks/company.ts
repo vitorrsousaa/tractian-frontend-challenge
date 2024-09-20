@@ -30,10 +30,10 @@ export function useGetLocationsByCompany(companyId?: string) {
 }
 export function useGetAssetsByCompany({
 	companyId,
-	filters,
+	// filters,
 }: {
 	companyId?: string;
-	filters: { sensor: "all" | "energy"; status: "all" | "alert" };
+	// filters: { sensor: "all" | "energy"; status: "all" | "alert" };
 }) {
 	const { data, isError, isPending, isLoading, isFetching } = useQuery({
 		queryFn: () => companiesServices.getAssetsByCompany(companyId || ""),
@@ -43,22 +43,22 @@ export function useGetAssetsByCompany({
 
 	const originalData = data ?? [];
 
-	const hasFilter = filters.sensor !== "all" || filters.status !== "all";
+	// const hasFilter = filters.sensor !== "all" || filters.status !== "all";
 
-	const filteredData = hasFilter
-		? originalData.filter((data) => {
-				const isComponent = Boolean(data.sensorType);
+	// const filteredData = hasFilter
+	// 	? originalData.filter((data) => {
+	// 			const isComponent = Boolean(data.sensorType);
 
-				return (
-					!isComponent ||
-					data.status === filters.status ||
-					data.sensorType === filters.sensor
-				);
-			})
-		: originalData;
+	// 			return (
+	// 				!isComponent ||
+	// 				data.status === filters.status ||
+	// 				data.sensorType === filters.sensor
+	// 			);
+	// 		})
+	// 	: originalData;
 
 	return {
-		assets: filteredData,
+		assets: originalData,
 		isErrorAssets: isError,
 		isLoadingAssets: isPending || isLoading || isFetching,
 	};
