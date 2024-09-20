@@ -13,6 +13,7 @@ export type ItemTree = {
 	isAsset?: boolean;
 	isBeingFiltered?: boolean;
 	isExpanded?: boolean;
+	isBeingSearched?: boolean;
 };
 
 interface TreeProps {

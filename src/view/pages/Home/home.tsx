@@ -9,7 +9,7 @@ import { Button } from "@/ui/button";
 import { Icon } from "@/ui/icon";
 import { Spinner } from "@/ui/spinner";
 import { cn } from "@/utils/cn";
-import { useCallback, useMemo, useReducer } from "react";
+import { useCallback, useMemo, useReducer, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card } from "./components/card";
 import { CardContent } from "./components/card-content";
@@ -30,6 +30,8 @@ export function Home() {
 
 	const [sensorfilter, toggleSensorFilter] = useReducer((prev) => !prev, false);
 	const [statusfilter, toggleStatusFilter] = useReducer((prev) => !prev, false);
+
+	const [search, setSearch] = useState("");
 
 	const selectedCompany = companies.find(
 		(comp) => comp.name.toLowerCase() === company,
@@ -122,6 +124,44 @@ export function Home() {
 		[],
 	);
 
+	const searchTree = useCallback((tree: ItemTree[], search: string) => {
+		const lowerSearch = search.toLowerCase();
+
+		return tree.map((item) => {
+			const name = item.name.toLowerCase();
+			const hasSearchOnName = search.length > 0 && name.includes(lowerSearch);
+
+			item.isBeingSearched = hasSearchOnName;
+			item.isExpanded = hasSearchOnName;
+
+			if (search.length === 0) {
+				delete item.isBeingSearched;
+			}
+
+			if (item.children) {
+				searchTree(item.children, search);
+
+				const hasChildrenBeingSearched = item.children.some(
+					(child) => child.isExpanded,
+				);
+
+				if (hasChildrenBeingSearched) {
+					item.isExpanded = true;
+				}
+			}
+
+			return item;
+		});
+	}, []);
+
+	const handleChangeSearch = useCallback(
+		(value: string) => {
+			setSearch(value);
+			searchTree(tree, value);
+		},
+		[searchTree, setSearch, tree],
+	);
+
 	const filteredTree = useMemo(() => {
 		return filterTree(tree, { sensor: sensorfilter, status: statusfilter });
 	}, [tree, sensorfilter, statusfilter, filterTree]);
@@ -182,7 +222,7 @@ export function Home() {
 				) : (
 					<div className="flex flex-row w-full gap-2 h-full">
 						<div className="w-[550px] border border-border rounded-md overflow-y-auto max-h-screen min-h-[calc(100vh-64px)]">
-							<Search />
+							<Search value={search} onChange={handleChangeSearch} />
 							<Tree data={filteredTree} />
 						</div>
 						<div className="flex flex-col gap-2 w-full border border-border rounded-md">

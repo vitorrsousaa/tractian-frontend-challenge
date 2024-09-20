@@ -31,10 +31,12 @@ export function TreeNode({ node }: { node: ItemTree }) {
 		setShowChildrens(node.isExpanded || false);
 	}, [node.isExpanded]);
 
-	const filter = node.isBeingFiltered === false && node.isExpanded === false;
+	const shouldHiddenItem =
+		(node.isBeingFiltered === false && node.isExpanded === false) ||
+		(node.isBeingSearched === false && node.isExpanded === false);
 
 	return (
-		<div className={cn(filter && "hidden")}>
+		<div className={cn(shouldHiddenItem && "hidden")}>
 			<button
 				className="flex items-center gap-1 cursor-pointer hover:bg-blue-200"
 				onClick={handleClick}
